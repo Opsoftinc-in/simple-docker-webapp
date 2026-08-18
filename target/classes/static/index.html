@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>simple-docker-webapp</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e14;
+    --panel: #10151f;
+    --border: #1e2530;
+    --text: #e6edf3;
+    --dim: #62707f;
+    --green: #3fb950;
+    --amber: #d4a72c;
+    --cyan: #39c5cf;
+    --red: #f85149;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--bg);
+    background-image:
+      radial-gradient(circle at 15% 10%, rgba(63, 185, 80, 0.05), transparent 40%),
+      radial-gradient(circle at 85% 90%, rgba(57, 197, 207, 0.05), transparent 40%);
+    color: var(--text);
+    font-family: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .window {
+    width: 100%;
+    max-width: 720px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.45);
+    overflow: hidden;
+  }
+
+  .titlebar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: #0d1219;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .dot { width: 11px; height: 11px; border-radius: 50%; }
+  .dot.r { background: #ff5f56; }
+  .dot.y { background: #ffbd2e; }
+  .dot.g { background: #27c93f; }
+
+  .titlebar span {
+    margin-left: 8px;
+    font-size: 12px;
+    color: var(--dim);
+    letter-spacing: 0.3px;
+  }
+
+  .screen {
+    padding: 22px 22px 26px;
+    min-height: 340px;
+  }
+
+  .line {
+    font-size: 13.5px;
+    line-height: 1.75;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .prompt { color: var(--dim); }
+  .ok { color: var(--green); }
+  .info { color: var(--cyan); }
+  .warn { color: var(--amber); }
+
+  .cursor {
+    display: inline-block;
+    width: 8px;
+    height: 15px;
+    background: var(--green);
+    vertical-align: text-bottom;
+    margin-left: 2px;
+    animation: blink 1s step-end infinite;
+  }
+
+  @keyframes blink {
+    50% { opacity: 0; }
+  }
+
+  .stats {
+    margin-top: 18px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+
+  .stats.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .stat {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 12px;
+    background: rgba(255,255,255,0.015);
+  }
+
+  .stat .label {
+    font-size: 10.5px;
+    letter-spacing: 1.2px;
+    color: var(--dim);
+    text-transform: uppercase;
+  }
+
+  .stat .value {
+    margin-top: 4px;
+    font-size: 13.5px;
+    color: var(--text);
+    font-weight: 500;
+    overflow-wrap: anywhere;
+  }
+
+  .stat .value.accent { color: var(--green); }
+
+  .footer-row {
+    margin-top: 18px;
+    font-size: 12px;
+    color: var(--dim);
+  }
+
+  .footer-row a { color: var(--cyan); text-decoration: none; }
+  .footer-row a:hover { text-decoration: underline; }
+
+  @media (max-width: 480px) {
+    .stats { grid-template-columns: 1fr; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cursor { animation: none; opacity: 1; }
+    .stats { transition: none; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="window">
+    <div class="titlebar">
+      <div class="dot r"></div>
+      <div class="dot y"></div>
+      <div class="dot g"></div>
+      <span>simple-docker-webapp — java -jar app.jar</span>
+    </div>
+    <div class="screen" id="screen">
+      <div id="log"></div>
+      <div class="stats" id="stats">
+        <div class="stat"><div class="label">Status</div><div class="value accent" id="s-status">—</div></div>
+        <div class="stat"><div class="label">Java Version</div><div class="value" id="s-java">—</div></div>
+        <div class="stat"><div class="label">Uptime</div><div class="value" id="s-uptime">—</div></div>
+        <div class="stat"><div class="label">Server Time</div><div class="value" id="s-time">—</div></div>
+        <div class="stat"><div class="label">OS</div><div class="value" id="s-os">—</div></div>
+        <div class="stat"><div class="label">CPU Cores</div><div class="value" id="s-cpu">—</div></div>
+      </div>
+      <div class="footer-row">
+        try <a href="/api/greet?name=Charan">/api/greet?name=Charan</a> ·
+        <a href="/api/info">/api/info</a> ·
+        <a href="/actuator/health">/actuator/health</a>
+      </div>
+    </div>
+  </div>
+
+<script>
+  const bootLines = [
+    { text: ':: Spring Boot :: starting simple-docker-webapp', cls: 'prompt' },
+    { text: 'Starting WebAppApplication on container using JVM', cls: 'info' },
+    { text: 'Tomcat initialized with port 8080 (http)', cls: 'info' },
+    { text: 'Actuator health endpoint registered at /actuator/health', cls: 'info' },
+    { text: 'Started WebAppApplication — ready in 0.891s', cls: 'ok' },
+  ];
+
+  const logEl = document.getElementById('log');
+  const statsEl = document.getElementById('stats');
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function renderLine(line, withCursor) {
+    const div = document.createElement('div');
+    div.className = 'line ' + line.cls;
+    div.textContent = line.text;
+    if (withCursor) {
+      const c = document.createElement('span');
+      c.className = 'cursor';
+      div.appendChild(c);
+    }
+    return div;
+  }
+
+  async function playBoot() {
+    if (reduceMotion) {
+      bootLines.forEach(l => logEl.appendChild(renderLine(l, false)));
+      await loadStats();
+      return;
+    }
+    for (const line of bootLines) {
+      const el = renderLine(line, false);
+      logEl.appendChild(el);
+      await new Promise(r => setTimeout(r, 180));
+    }
+    await loadStats();
+  }
+
+  async function loadStats() {
+    const prompt = renderLine({ text: '$ curl localhost:8080/api/info', cls: 'prompt' }, true);
+    logEl.appendChild(prompt);
+
+    try {
+      const res = await fetch('/api/info');
+      const data = await res.json();
+
+      document.getElementById('s-status').textContent = 'UP';
+      document.getElementById('s-java').textContent = data.javaVersion;
+      document.getElementById('s-uptime').textContent = data.uptimeFormatted;
+      document.getElementById('s-time').textContent = data.timestamp;
+      document.getElementById('s-os').textContent = data.osName + ' (' + data.osArch + ')';
+      document.getElementById('s-cpu').textContent = data.availableProcessors;
+
+      statsEl.classList.add('show');
+
+      setInterval(async () => {
+        const r = await fetch('/api/info');
+        const d = await r.json();
+        document.getElementById('s-uptime').textContent = d.uptimeFormatted;
+        document.getElementById('s-time').textContent = d.timestamp;
+      }, 1000);
+    } catch (e) {
+      const errLine = renderLine({ text: 'error: could not reach /api/info', cls: 'warn' }, true);
+      logEl.appendChild(errLine);
+    }
+  }
+
+  playBoot();
+</script>
+
+</body>
+</html>
