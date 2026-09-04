@@ -32,28 +32,6 @@ docker compose logs -f
 docker compose down
 ```
 
-## 4. Later: SonarQube analysis
-Run a local SonarQube server (via Docker), then analyze with the Maven plugin:
-```bash
-docker run -d --name sonarqube -p 9000:9000 sonarqube:lts-community
-
-mvn clean verify sonar:sonar \
-  -Dsonar.projectKey=simple-docker-webapp \
-  -Dsonar.host.url=http://localhost:9000 \
-  -Dsonar.token=<your-generated-token>
-```
-The JaCoCo plugin already in `pom.xml` will feed code coverage into the SonarQube report.
-
-## 5. Later: Trivy scan
-Scan the built image for vulnerabilities:
-```bash
-trivy image simple-docker-webapp:latest
-```
-Scan the filesystem/dependencies instead:
-```bash
-trivy fs .
-```
-
 ## Notes
 - The Dockerfile uses a multi-stage build (Maven build stage → slim JRE Alpine runtime) to keep the final image small and reduce the attack surface Trivy will report on.
 - The container runs as a non-root user by default — a common security practice you'll see flagged in scans if missing.
